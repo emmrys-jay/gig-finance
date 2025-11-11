@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     amount DECIMAL(15, 2) NOT NULL,
     status payment_status NOT NULL DEFAULT 'PENDING',
     description TEXT,
-    transaction_date TIMESTAMP NOT NULL DEFAULT NOW(),
+    transaction_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );

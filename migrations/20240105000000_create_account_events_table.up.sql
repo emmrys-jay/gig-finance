@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS account_events (
     type transaction_type NOT NULL,
     previous_balance DECIMAL(15, 2) NOT NULL,
     new_balance DECIMAL(15, 2) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_account_events_transaction_id ON account_events(transaction_id);
