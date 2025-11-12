@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/emmrys-jay/gigmile/internal/models"
@@ -26,22 +27,23 @@ func (h *PaymentHandler) ProcessPaymentNotification(w http.ResponseWriter, r *ht
 	var req models.PaymentNotificationRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, errors.New("invalid request payload"))
+		log.Printf("Error: %v", err)
+		respondWithError(w, r, http.StatusBadRequest, errors.New("invalid request payload"))
 		return
 	}
 
 	// Validate request
 	err := h.validator.Struct(req)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, err)
+		respondWithError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	err = h.paymentService.ProcessPaymentNotification(&req)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, err)
+		respondWithError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, nil)
+	respondWithJSON(w, r, http.StatusOK, nil)
 }

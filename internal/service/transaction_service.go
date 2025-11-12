@@ -6,7 +6,7 @@ import (
 )
 
 type TransactionService interface {
-	GetTransactionsByCustomer(customerID int64) ([]*models.TransactionWithAccountEvent, error)
+	GetTransactionsByCustomer(customerID int64) ([]*models.Transaction, error)
 }
 
 type transactionService struct {
@@ -19,7 +19,6 @@ func NewTransactionService(transactionRepo repository.TransactionRepository) Tra
 	}
 }
 
-func (s *transactionService) GetTransactionsByCustomer(customerID int64) ([]*models.TransactionWithAccountEvent, error) {
-	return s.transactionRepo.GetByCustomerIDWithAccountEvents(customerID)
+func (s *transactionService) GetTransactionsByCustomer(customerID int64) ([]*models.Transaction, error) {
+	return s.transactionRepo.GetByCustomerID(customerID)
 }
-

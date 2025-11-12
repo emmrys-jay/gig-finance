@@ -25,16 +25,15 @@ func (h *TransactionHandler) GetTransactionsByCustomer(w http.ResponseWriter, r 
 	// Parse customer ID (handles both GIG prefix and numeric formats)
 	id, err := utils.ParseCustomerID(vars["id"])
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, errors.New("invalid customer ID"))
+		respondWithError(w, r, http.StatusBadRequest, errors.New("invalid customer ID"))
 		return
 	}
 
 	transactions, err := h.transactionService.GetTransactionsByCustomer(id)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
+		respondWithError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, transactions)
+	respondWithJSON(w, r, http.StatusOK, transactions)
 }
-

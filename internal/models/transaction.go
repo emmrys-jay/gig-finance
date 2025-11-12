@@ -1,6 +1,11 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+
+	"github.com/emmrys-jay/gigmile/internal/utils"
+)
 
 type PaymentStatus string
 
@@ -12,9 +17,9 @@ const (
 )
 
 type Transaction struct {
-	ID              int64         `json:"id"`
-	CustomerID      int64         `json:"customer_id"`
-	AccountID       int64         `json:"account_id"`
+	ID              int64         `json:"-"`
+	CustomerID      int64         `json:"-"`
+	AccountID       int64         `json:"-"`
 	Reference       string        `json:"reference"`
 	Amount          float64       `json:"amount"`
 	Status          PaymentStatus `json:"status"`
@@ -22,6 +27,23 @@ type Transaction struct {
 	TransactionDate time.Time     `json:"transaction_date"`
 	CreatedAt       time.Time     `json:"created_at"`
 	UpdatedAt       time.Time     `json:"updated_at"`
+}
+
+// MarshalJSON customizes JSON marshaling to include formatted transaction_id, customer_id, and account_id
+func (t *Transaction) MarshalJSON() ([]byte, error) {
+	type Alias Transaction
+
+	return json.Marshal(struct {
+		ID         string `json:"id"`
+		CustomerID string `json:"customer_id"`
+		AccountID  string `json:"account_id"`
+		Alias
+	}{
+		ID:         utils.FormatTransactionID(t.ID),
+		CustomerID: utils.FormatCustomerID(t.CustomerID),
+		AccountID:  utils.FormatAccountID(t.AccountID),
+		Alias:      (Alias)(*t),
+	})
 }
 
 type CreateTransactionRequest struct {

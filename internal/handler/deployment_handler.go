@@ -26,21 +26,21 @@ func (h *DeploymentHandler) RecordDeployment(w http.ResponseWriter, r *http.Requ
 	var req models.CreateDeploymentRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, errors.New("invalid request payload"))
+		respondWithError(w, r, http.StatusBadRequest, errors.New("invalid request payload"))
 		return
 	}
 
 	// Validate request
 	if err := h.validator.Struct(req); err != nil {
-		respondWithError(w, http.StatusBadRequest, err)
+		respondWithError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	err := h.deploymentService.RecordDeployment(&req)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, err)
+		respondWithError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, nil)
+	respondWithJSON(w, r, http.StatusOK, nil)
 }

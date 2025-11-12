@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/emmrys-jay/gigmile/internal/models"
 	"github.com/jackc/pgx/v5"
@@ -16,7 +15,6 @@ type TransactionRepository interface {
 	GetByID(id int64) (*models.Transaction, error)
 	GetByReference(reference string) (*models.Transaction, error)
 	GetByCustomerID(customerID int64) ([]*models.Transaction, error)
-	GetByCustomerIDWithAccountEvents(customerID int64) ([]*models.TransactionWithAccountEvent, error)
 	GetByAccountID(accountID int64) ([]*models.Transaction, error)
 	GetByCustomerAndAccountID(customerID, accountID int64) ([]*models.Transaction, error)
 	GetAll() ([]*models.Transaction, error)
@@ -169,7 +167,7 @@ func (r *transactionRepository) GetByCustomerID(customerID int64) ([]*models.Tra
 		SELECT id, customer_id, account_id, reference, amount, status, description, transaction_date, created_at, updated_at
 		FROM transactions
 		WHERE customer_id = $1
-		ORDER BY created_at DESC
+		ORDER BY transaction_date DESC
 	`
 
 	rows, err := r.db.Query(ctx, query, customerID)
@@ -197,86 +195,6 @@ func (r *transactionRepository) GetByCustomerID(customerID int64) ([]*models.Tra
 			return nil, fmt.Errorf("failed to scan transaction: %w", err)
 		}
 		transactions = append(transactions, transaction)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating transactions: %w", err)
-	}
-
-	return transactions, nil
-}
-
-func (r *transactionRepository) GetByCustomerIDWithAccountEvents(customerID int64) ([]*models.TransactionWithAccountEvent, error) {
-	ctx := context.Background()
-	query := `
-		SELECT 
-			t.id, t.customer_id, t.account_id, t.reference, t.amount, t.status, t.description, t.transaction_date, t.created_at, t.updated_at,
-			ae.id, ae.transaction_id, ae.account_id, ae.type, ae.previous_balance, ae.new_balance, ae.created_at
-		FROM transactions t
-		LEFT JOIN account_events ae ON t.id = ae.transaction_id
-		WHERE t.customer_id = $1
-		ORDER BY t.transaction_date DESC
-	`
-
-	rows, err := r.db.Query(ctx, query, customerID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get transactions: %w", err)
-	}
-	defer rows.Close()
-
-	transactions := []*models.TransactionWithAccountEvent{}
-	for rows.Next() {
-		transaction := &models.Transaction{}
-		accountEvent := &models.AccountEvent{}
-
-		var accountEventID *int64
-		var accountEventTransactionID *int64
-		var accountEventAccountID *int64
-		var accountEventType *models.TransactionType
-		var accountEventPreviousBalance *float64
-		var accountEventNewBalance *float64
-		var accountEventCreatedAt *time.Time
-
-		err := rows.Scan(
-			&transaction.ID,
-			&transaction.CustomerID,
-			&transaction.AccountID,
-			&transaction.Reference,
-			&transaction.Amount,
-			&transaction.Status,
-			&transaction.Description,
-			&transaction.TransactionDate,
-			&transaction.CreatedAt,
-			&transaction.UpdatedAt,
-			&accountEventID,
-			&accountEventTransactionID,
-			&accountEventAccountID,
-			&accountEventType,
-			&accountEventPreviousBalance,
-			&accountEventNewBalance,
-			&accountEventCreatedAt,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan transaction: %w", err)
-		}
-
-		// Only include account event if it exists
-		if accountEventID != nil {
-			accountEvent.ID = *accountEventID
-			accountEvent.TransactionID = *accountEventTransactionID
-			accountEvent.AccountID = *accountEventAccountID
-			accountEvent.Type = *accountEventType
-			accountEvent.PreviousBalance = *accountEventPreviousBalance
-			accountEvent.NewBalance = *accountEventNewBalance
-			accountEvent.CreatedAt = *accountEventCreatedAt
-		} else {
-			accountEvent = nil
-		}
-
-		transactions = append(transactions, &models.TransactionWithAccountEvent{
-			Transaction:  transaction,
-			AccountEvent: accountEvent,
-		})
 	}
 
 	if err := rows.Err(); err != nil {

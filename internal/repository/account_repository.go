@@ -246,16 +246,6 @@ func (r *accountRepository) Debit(accountID int64, transactionID int64, amount f
 		return fmt.Errorf("failed to update account balance: %w", err)
 	}
 
-	// Create account event
-	eventQuery := `
-		INSERT INTO account_events (transaction_id, account_id, type, previous_balance, new_balance, created_at)
-		VALUES ($1, $2, 'debit', $3, $4, NOW())
-	`
-	_, err = tx.Exec(ctx, eventQuery, transactionID, accountID, previousBalance, newBalance)
-	if err != nil {
-		return fmt.Errorf("failed to create account event: %w", err)
-	}
-
 	// Commit transaction
 	if err = tx.Commit(ctx); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
@@ -303,16 +293,6 @@ func (r *accountRepository) Credit(accountID int64, transactionID int64, amount 
 	_, err = tx.Exec(ctx, updateQuery, newBalance, accountID)
 	if err != nil {
 		return fmt.Errorf("failed to update account balance: %w", err)
-	}
-
-	// Create account event
-	eventQuery := `
-		INSERT INTO account_events (transaction_id, account_id, type, previous_balance, new_balance, created_at)
-		VALUES ($1, $2, 'credit', $3, $4, NOW())
-	`
-	_, err = tx.Exec(ctx, eventQuery, transactionID, accountID, previousBalance, newBalance)
-	if err != nil {
-		return fmt.Errorf("failed to create account event: %w", err)
 	}
 
 	// Commit transaction

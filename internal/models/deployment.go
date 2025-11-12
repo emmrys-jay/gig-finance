@@ -5,8 +5,3 @@ type CreateDeploymentRequest struct {
 	Reference   string `json:"reference" validate:"required"`
 	Description string `json:"description"`
 }
-
-type TransactionWithAccountEvent struct {
-	Transaction  *Transaction  `json:"transaction"`
-	AccountEvent *AccountEvent `json:"account_event"`
-}

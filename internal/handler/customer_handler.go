@@ -28,23 +28,23 @@ func (h *CustomerHandler) CreateCustomer(w http.ResponseWriter, r *http.Request)
 	var customerReq models.CreateCustomerRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&customerReq); err != nil {
-		respondWithError(w, http.StatusBadRequest, errors.New("invalid request payload"))
+		respondWithError(w, r, http.StatusBadRequest, errors.New("invalid request payload"))
 		return
 	}
 
 	// Validate request
 	if err := h.validator.Struct(customerReq); err != nil {
-		respondWithError(w, http.StatusBadRequest, err)
+		respondWithError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	customer, err := h.customerService.CreateCustomer(&customerReq)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, err)
+		respondWithError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, customer)
+	respondWithJSON(w, r, http.StatusCreated, customer)
 }
 
 func (h *CustomerHandler) GetCustomerByID(w http.ResponseWriter, r *http.Request) {
@@ -53,27 +53,27 @@ func (h *CustomerHandler) GetCustomerByID(w http.ResponseWriter, r *http.Request
 	// Parse customer ID (handles both GIG prefix and numeric formats)
 	id, err := utils.ParseCustomerID(vars["id"])
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, errors.New("invalid customer ID"))
+		respondWithError(w, r, http.StatusBadRequest, errors.New("invalid customer ID"))
 		return
 	}
 
 	customer, err := h.customerService.GetCustomerByID(id)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, err)
+		respondWithError(w, r, http.StatusNotFound, err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, customer)
+	respondWithJSON(w, r, http.StatusOK, customer)
 }
 
 func (h *CustomerHandler) GetAllCustomers(w http.ResponseWriter, r *http.Request) {
 	customers, err := h.customerService.GetAllCustomers()
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
+		respondWithError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, customers)
+	respondWithJSON(w, r, http.StatusOK, customers)
 }
 
 func (h *CustomerHandler) UpdateCustomer(w http.ResponseWriter, r *http.Request) {
@@ -82,29 +82,29 @@ func (h *CustomerHandler) UpdateCustomer(w http.ResponseWriter, r *http.Request)
 	// Parse customer ID (handles both GIG prefix and numeric formats)
 	id, err := utils.ParseCustomerID(vars["id"])
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, errors.New("invalid customer ID"))
+		respondWithError(w, r, http.StatusBadRequest, errors.New("invalid customer ID"))
 		return
 	}
 
 	var customerReq models.UpdateCustomerRequest
 	if err := json.NewDecoder(r.Body).Decode(&customerReq); err != nil {
-		respondWithError(w, http.StatusBadRequest, errors.New("invalid request payload"))
+		respondWithError(w, r, http.StatusBadRequest, errors.New("invalid request payload"))
 		return
 	}
 
 	// Validate request
 	if err := h.validator.Struct(customerReq); err != nil {
-		respondWithError(w, http.StatusBadRequest, err)
+		respondWithError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	customer, err := h.customerService.UpdateCustomer(id, &customerReq)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, err)
+		respondWithError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, customer)
+	respondWithJSON(w, r, http.StatusOK, customer)
 }
 
 func (h *CustomerHandler) DeleteCustomer(w http.ResponseWriter, r *http.Request) {
@@ -113,15 +113,15 @@ func (h *CustomerHandler) DeleteCustomer(w http.ResponseWriter, r *http.Request)
 	// Parse customer ID (handles both GIG prefix and numeric formats)
 	id, err := utils.ParseCustomerID(vars["id"])
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, errors.New("invalid customer ID"))
+		respondWithError(w, r, http.StatusBadRequest, errors.New("invalid customer ID"))
 		return
 	}
 
 	err = h.customerService.DeleteCustomer(id)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, err)
+		respondWithError(w, r, http.StatusNotFound, err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, nil)
+	respondWithJSON(w, r, http.StatusOK, nil)
 }

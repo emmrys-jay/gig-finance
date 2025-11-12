@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emmrys-jay/gigmile/internal/handler"
+	"github.com/emmrys-jay/gigmile/internal/middleware"
 	"github.com/emmrys-jay/gigmile/internal/service"
 	"github.com/gorilla/mux"
 )
@@ -22,6 +23,9 @@ func NewRouter(
 	deploymentHandler := handler.NewDeploymentHandler(deploymentService)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 	accountHandler := handler.NewAccountHandler(accountService)
+
+	// Apply logging middleware
+	router.Use(middleware.LoggingMiddleware)
 
 	// Customer routes
 	api := router.PathPrefix("/api/v1").Subrouter()

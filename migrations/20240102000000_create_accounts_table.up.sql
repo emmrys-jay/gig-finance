@@ -12,3 +12,8 @@ CREATE INDEX IF NOT EXISTS idx_accounts_customer_id ON accounts(customer_id);
 CREATE INDEX IF NOT EXISTS idx_accounts_created_at ON accounts(created_at);
 -- +goose StatementEnd
 
+
+-- +goose Down
+-- +goose StatementBegin
+DROP TABLE IF EXISTS accounts;
+-- +goose StatementEnd

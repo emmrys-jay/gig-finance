@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -45,12 +46,6 @@ func (s *paymentService) ProcessPaymentNotification(req *models.PaymentNotificat
 		return fmt.Errorf("invalid customer_id: %w", err)
 	}
 
-	// Get customer
-	_, err = s.customerRepo.GetByID(customerID)
-	if err != nil {
-		return fmt.Errorf("customer not found: %w", err)
-	}
-
 	// Parse transaction amount
 	amount, err := strconv.ParseFloat(req.TransactionAmount, 64)
 	if err != nil {
@@ -60,19 +55,8 @@ func (s *paymentService) ProcessPaymentNotification(req *models.PaymentNotificat
 	// Get or create the customer's account (one account per customer)
 	account, err := s.accountRepo.GetByCustomerID(customerID)
 	if err != nil {
-		// Account doesn't exist, create it
-		createAccountReq := &models.CreateAccountRequest{
-			CustomerID: customerID,
-			Balance:    0.00,
-		}
-		account, err = s.accountRepo.Create(createAccountReq)
-		if err != nil {
-			return fmt.Errorf("failed to create account: %w", err)
-		}
+		return fmt.Errorf("account not found: %w", err)
 	}
-
-	// Convert payment status to transaction status
-	status := models.PaymentStatus(strings.ToUpper(req.PaymentStatus))
 
 	// Parse transaction date
 	// Expected format: "2025-11-07 14:54:16"
@@ -87,7 +71,7 @@ func (s *paymentService) ProcessPaymentNotification(req *models.PaymentNotificat
 		AccountID:       account.ID,
 		Reference:       req.TransactionReference,
 		Amount:          amount,
-		Status:          status,
+		Status:          models.PaymentStatus(strings.ToUpper(req.PaymentStatus)),
 		Description:     req.TransactionDate,
 		TransactionDate: &transactionDate,
 	}
@@ -98,11 +82,13 @@ func (s *paymentService) ProcessPaymentNotification(req *models.PaymentNotificat
 	}
 
 	// Credit the account (only if status is COMPLETE)
-	if status == models.PaymentStatusComplete {
-		err = s.accountRepo.Credit(account.ID, transaction.ID, amount)
-		if err != nil {
-			return fmt.Errorf("failed to credit account: %w", err)
-		}
+	if createTransactionReq.Status == models.PaymentStatusComplete {
+		go func() {
+			err := s.accountRepo.Credit(account.ID, transaction.ID, amount)
+			if err != nil {
+				log.Printf("failed to credit account: %v", err)
+			}
+		}()
 	}
 
 	return nil

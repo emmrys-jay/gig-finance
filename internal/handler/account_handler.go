@@ -25,16 +25,16 @@ func (h *AccountHandler) GetAccountByCustomer(w http.ResponseWriter, r *http.Req
 	// Parse customer ID (handles both GIG prefix and numeric formats)
 	id, err := utils.ParseCustomerID(vars["id"])
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, errors.New("invalid customer ID"))
+		respondWithError(w, r, http.StatusBadRequest, errors.New("invalid customer ID"))
 		return
 	}
 
 	account, err := h.accountService.GetAccountByCustomer(id)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, err)
+		respondWithError(w, r, http.StatusNotFound, err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, account)
+	respondWithJSON(w, r, http.StatusOK, account)
 }
 

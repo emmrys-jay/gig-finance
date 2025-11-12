@@ -18,11 +18,13 @@ type CustomerService interface {
 
 type customerService struct {
 	customerRepo repository.CustomerRepository
+	accountRepo  repository.AccountRepository
 }
 
-func NewCustomerService(customerRepo repository.CustomerRepository) CustomerService {
+func NewCustomerService(customerRepo repository.CustomerRepository, accountRepo repository.AccountRepository) CustomerService {
 	return &customerService{
 		customerRepo: customerRepo,
+		accountRepo:  accountRepo,
 	}
 }
 
@@ -34,6 +36,16 @@ func (s *customerService) CreateCustomer(customerReq *models.CreateCustomerReque
 	customer, err := s.customerRepo.Create(customerReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create customer: %w", err)
+	}
+
+	// Create account for the customer
+	createAccountReq := &models.CreateAccountRequest{
+		CustomerID: customer.ID,
+		Balance:    0.00,
+	}
+	_, err = s.accountRepo.Create(createAccountReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create account for customer: %w", err)
 	}
 
 	return customer, nil

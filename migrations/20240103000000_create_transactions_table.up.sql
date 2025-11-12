@@ -1,14 +1,13 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TYPE payment_status AS ENUM ('PENDING', 'COMPLETE', 'FAILED', 'CANCELLED');
 
 CREATE TABLE IF NOT EXISTS transactions (
     id SERIAL PRIMARY KEY,
-    customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE RESTRICT,
-    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE RESTRICT,
-    reference VARCHAR(255) UNIQUE NOT NULL,
+    customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    reference VARCHAR(255) NOT NULL,
     amount DECIMAL(15, 2) NOT NULL,
-    status payment_status NOT NULL DEFAULT 'PENDING',
+    status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
     description TEXT,
     transaction_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -22,3 +21,7 @@ CREATE INDEX IF NOT EXISTS idx_transactions_transaction_date ON transactions(tra
 CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at);
 -- +goose StatementEnd
 
+-- +goose Down
+-- +goose StatementBegin
+DROP TABLE IF EXISTS transactions;
+-- +goose StatementEnd

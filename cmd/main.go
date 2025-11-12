@@ -32,7 +32,7 @@ func main() {
 	transactionRepo := repository.NewTransactionRepository(db.Pool)
 
 	// Initialize services
-	customerService := service.NewCustomerService(customerRepo)
+	customerService := service.NewCustomerService(customerRepo, accountRepo)
 	paymentService := service.NewPaymentService(customerRepo, accountRepo, transactionRepo)
 	deploymentService := service.NewDeploymentService(customerRepo, accountRepo, transactionRepo)
 	transactionService := service.NewTransactionService(transactionRepo)
