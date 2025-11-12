@@ -28,7 +28,7 @@ cp env.example .env
 Run migrations to set up the database schema:
 
 ```bash
-go run cmd/migrate/main.go -command=up
+GOEXPERIMENT=jsonv2 go run cmd/migrate/main.go -command=up
 ```
 
 Or using Make:
@@ -41,7 +41,7 @@ make migrate-up
 Run the application:
 
 ```bash
-go run cmd/main.go
+GOEXPERIMENT=jsonv2 go run cmd/main.go
 ```
 
 Or using Make:
