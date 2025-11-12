@@ -98,46 +98,42 @@ func (s *paymentService) ProcessPaymentNotification(req *models.PaymentNotificat
 
 	}
 
-	// Parse transaction date
-	// Expected format: "2025-11-07 14:54:16"
-	transactionDate, err := time.Parse("2006-01-02 15:04:05", req.TransactionDate)
-	if err != nil {
-		return fmt.Errorf("invalid transaction_date format: %w", err)
-	}
+	go func() {
+		// Parse transaction date
+		// Expected format: "2025-11-07 14:54:16"
+		transactionDate, err := time.Parse("2006-01-02 15:04:05", req.TransactionDate)
+		if err != nil {
+			log.Printf("invalid transaction_date format: %v", err)
+			return
+		}
 
-	// Create transaction
-	createTransactionReq := &models.CreateTransactionRequest{
-		CustomerID:      customerID,
-		AccountID:       account.ID,
-		Reference:       req.TransactionReference,
-		Amount:          amount,
-		Status:          models.PaymentStatus(strings.ToUpper(req.PaymentStatus)),
-		Description:     req.TransactionDate,
-		TransactionDate: &transactionDate,
-	}
+		// Create transaction
+		createTransactionReq := &models.CreateTransactionRequest{
+			CustomerID:      customerID,
+			AccountID:       account.ID,
+			Reference:       req.TransactionReference,
+			Amount:          amount,
+			Status:          models.PaymentStatus(strings.ToUpper(req.PaymentStatus)),
+			Description:     req.TransactionDate,
+			TransactionDate: &transactionDate,
+		}
 
-	transaction, err := s.transactionRepo.Create(createTransactionReq)
-	if err != nil {
-		return fmt.Errorf("failed to create transaction: %w", err)
-	}
+		transaction, err := s.transactionRepo.Create(createTransactionReq)
+		if err != nil {
+			log.Printf("failed to create transaction: %v", err)
+			return
+		}
 
-	// Credit the account (only if status is COMPLETE)
-	if createTransactionReq.Status == models.PaymentStatusComplete {
-		go func(custID int64) {
+		// Credit the account (only if status is COMPLETE)
+		if createTransactionReq.Status == models.PaymentStatusComplete {
 			err := s.accountRepo.Credit(account.ID, transaction.ID, amount)
 			if err != nil {
 				log.Printf("failed to credit account: %v", err)
 				return
 			}
 
-			// Invalidate cache after successful credit
-			cacheCtx := context.Background()
-			cacheKey := fmt.Sprintf("account:customer:%d", custID)
-			if err := s.cache.Delete(cacheCtx, cacheKey); err != nil {
-				log.Printf("failed to invalidate cache: %v", err)
-			}
-		}(customerID)
-	}
+		}
+	}()
 
 	return nil
 }
