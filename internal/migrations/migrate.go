@@ -1,8 +1,10 @@
 package migrations
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"os"
 
 	"github.com/emmrys-jay/gigmile/config"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -18,17 +20,24 @@ func RunMigrations(cfg *config.Config) error {
 	}
 	defer db.Close()
 
+	// Use a single connection for migrations to avoid prepared statement conflicts
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+
 	if err := db.Ping(); err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	// Set dialect
-	if err := goose.SetDialect("postgres"); err != nil {
-		return fmt.Errorf("failed to set dialect: %w", err)
+	// Use the newer provider API instead of global SetDialect
+	provider, err := goose.NewProvider(goose.DialectPostgres, db, os.DirFS("migrations"))
+	if err != nil {
+		return fmt.Errorf("failed to create goose provider: %w", err)
 	}
 
 	// Run migrations
-	if err := goose.Up(db, "migrations"); err != nil {
+	ctx := context.Background()
+	_, err = provider.Up(ctx)
+	if err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
@@ -44,17 +53,24 @@ func RunMigrationsDown(cfg *config.Config) error {
 	}
 	defer db.Close()
 
+	// Use a single connection for migrations to avoid prepared statement conflicts
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+
 	if err := db.Ping(); err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	// Set dialect
-	if err := goose.SetDialect("postgres"); err != nil {
-		return fmt.Errorf("failed to set dialect: %w", err)
+	// Use the newer provider API instead of global SetDialect
+	provider, err := goose.NewProvider(goose.DialectPostgres, db, os.DirFS("migrations"))
+	if err != nil {
+		return fmt.Errorf("failed to create goose provider: %w", err)
 	}
 
 	// Run migrations down
-	if err := goose.Down(db, "migrations"); err != nil {
+	ctx := context.Background()
+	_, err = provider.Down(ctx)
+	if err != nil {
 		return fmt.Errorf("failed to run migrations down: %w", err)
 	}
 
@@ -70,17 +86,24 @@ func GetMigrationStatus(cfg *config.Config) error {
 	}
 	defer db.Close()
 
+	// Use a single connection for migrations to avoid prepared statement conflicts
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+
 	if err := db.Ping(); err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	// Set dialect
-	if err := goose.SetDialect("postgres"); err != nil {
-		return fmt.Errorf("failed to set dialect: %w", err)
+	// Use the newer provider API instead of global SetDialect
+	provider, err := goose.NewProvider(goose.DialectPostgres, db, os.DirFS("migrations"))
+	if err != nil {
+		return fmt.Errorf("failed to create goose provider: %w", err)
 	}
 
 	// Get migration status
-	if err := goose.Status(db, "migrations"); err != nil {
+	ctx := context.Background()
+	_, err = provider.Status(ctx)
+	if err != nil {
 		return fmt.Errorf("failed to get migration status: %w", err)
 	}
 

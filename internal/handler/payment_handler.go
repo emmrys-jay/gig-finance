@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"errors"
 	"log"
 	"net/http"
@@ -26,7 +26,7 @@ func NewPaymentHandler(paymentService service.PaymentService) *PaymentHandler {
 func (h *PaymentHandler) ProcessPaymentNotification(w http.ResponseWriter, r *http.Request) {
 	var req models.PaymentNotificationRequest
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.UnmarshalRead(r.Body, &req); err != nil {
 		log.Printf("Error: %v", err)
 		respondWithError(w, r, http.StatusBadRequest, errors.New("invalid request payload"))
 		return

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/emmrys-jay/gigmile/config"
+	"github.com/emmrys-jay/gigmile/internal/cache"
 	"github.com/emmrys-jay/gigmile/internal/database"
 	"github.com/emmrys-jay/gigmile/internal/repository"
 	"github.com/emmrys-jay/gigmile/internal/router"
@@ -26,6 +27,13 @@ func main() {
 	}
 	defer db.Close()
 
+	// Initialize Redis cache
+	redisCache, err := cache.NewRedisCache(cfg.RedisHost, cfg.RedisPort, cfg.RedisPassword, cfg.RedisDB)
+	if err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+	defer redisCache.Close()
+
 	// Initialize repositories
 	customerRepo := repository.NewCustomerRepository(db.Pool)
 	accountRepo := repository.NewAccountRepository(db.Pool)
@@ -33,8 +41,8 @@ func main() {
 
 	// Initialize services
 	customerService := service.NewCustomerService(customerRepo, accountRepo)
-	paymentService := service.NewPaymentService(customerRepo, accountRepo, transactionRepo)
-	deploymentService := service.NewDeploymentService(customerRepo, accountRepo, transactionRepo)
+	paymentService := service.NewPaymentService(customerRepo, accountRepo, transactionRepo, redisCache)
+	deploymentService := service.NewDeploymentService(customerRepo, accountRepo, transactionRepo, redisCache)
 	transactionService := service.NewTransactionService(transactionRepo)
 	accountService := service.NewAccountService(accountRepo)
 

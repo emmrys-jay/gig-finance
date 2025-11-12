@@ -1,8 +1,11 @@
 package service
 
 import (
+	"context"
 	"fmt"
+	"log"
 
+	"github.com/emmrys-jay/gigmile/internal/cache"
 	"github.com/emmrys-jay/gigmile/internal/models"
 	"github.com/emmrys-jay/gigmile/internal/repository"
 	"github.com/emmrys-jay/gigmile/internal/utils"
@@ -16,17 +19,20 @@ type deploymentService struct {
 	customerRepo    repository.CustomerRepository
 	accountRepo     repository.AccountRepository
 	transactionRepo repository.TransactionRepository
+	cache           cache.Cache
 }
 
 func NewDeploymentService(
 	customerRepo repository.CustomerRepository,
 	accountRepo repository.AccountRepository,
 	transactionRepo repository.TransactionRepository,
+	cache cache.Cache,
 ) DeploymentService {
 	return &deploymentService{
 		customerRepo:    customerRepo,
 		accountRepo:     accountRepo,
 		transactionRepo: transactionRepo,
+		cache:           cache,
 	}
 }
 
@@ -73,6 +79,13 @@ func (s *deploymentService) RecordDeployment(req *models.CreateDeploymentRequest
 	err = s.accountRepo.Debit(account.ID, transaction.ID, DeploymentAmount)
 	if err != nil {
 		return fmt.Errorf("failed to debit account: %w", err)
+	}
+
+	// Invalidate cache after successful debit
+	ctx := context.Background()
+	cacheKey := fmt.Sprintf("account:customer:%d", customerID)
+	if err := s.cache.Delete(ctx, cacheKey); err != nil {
+		log.Printf("failed to invalidate cache: %v", err)
 	}
 
 	return nil

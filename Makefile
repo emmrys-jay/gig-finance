@@ -23,12 +23,12 @@ migrate-create: ## Create a new migration (usage: make migrate-create NAME=migra
 	@goose -dir migrations create $(NAME) sql
 
 run: ## Run the application
-	@go run cmd/main.go
+	@GOEXPERIMENT=jsonv2 go run cmd/main.go
 
 build: ## Build the application
-	@go build -o bin/gigmile cmd/main.go
+	@GOEXPERIMENT=jsonv2 go build -o bin/gigmile cmd/main.go
 
 test: ## Run tests
-	@go test ./...
+	@GOEXPERIMENT=jsonv2 go test ./...
 
 
